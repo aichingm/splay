@@ -9,11 +9,7 @@ build-mpris :
 	gcc src/splay-mpris.c -o splay \
 		    -I/usr/include/dbus-1.0 \
 		    -I/usr/lib/dbus-1.0/include  \
-		    -I/usr/include/glib-2.0  \
-		    -I/usr/lib/glib-2.0/include \
 		    -ldbus-1 \
-		    -ldbus-glib-1 \
-		    -lglib-2.0 \
 		    -lncurses \
 		    -lvlc \
 		    -pthread
@@ -32,11 +28,7 @@ dbug-mpris :
 	    src/splay-mpris.c -o splay \
             -I/usr/include/dbus-1.0 \
             -I/usr/lib/dbus-1.0/include  \
-            -I/usr/include/glib-2.0  \
-            -I/usr/lib/glib-2.0/include \
             -ldbus-1 \
-            -ldbus-glib-1 \
-            -lglib-2.0 \
             -lncurses \
 	    -pthread
 

@@ -27,12 +27,11 @@ Just move the *splay* binary in any of  the directories which are in your `$PATH
 
 **No don't actually do this!** Move it for example to `/usr/local/bin` or create a `bin` directory in your `~` and add it to your `$PATH` 
 
-In order to run (and build) you need **all** of the below listed libraries on your system:
+In order to run (and build) you need **some** of the below listed libraries on your system:
 
 - libvlc 
 - ncurses 
 - dbus (only for build with MPRS support)
-- glib (only for build with MPRS support)
 
 
 

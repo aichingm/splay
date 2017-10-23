@@ -29,7 +29,6 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <dbus/dbus.h>
-#include <dbus/dbus-glib-lowlevel.h> /* GMainLoop */
 
 #include "mpris.h"
 #include "splay.h"
@@ -44,12 +43,9 @@ DBusHandlerResult mpris_message_handler(DBusConnection *conn, DBusMessage *messa
 
 const char *version = "1";
 DBusConnection *conn;
-GMainLoop *mainloop;
 struct SPlay *splay;
+int run = 1;
 
-const DBusObjectPathVTable server_vtable = {
-    .message_function = mpris_message_handler
-};
 
 void mpris_spawn() {
     int * retval;
@@ -59,7 +55,7 @@ void mpris_spawn() {
 }
 
 void mpris_shutdown() {
-    g_main_loop_quit(mainloop);
+    run = 0;
 }
 
 
@@ -338,6 +334,7 @@ DBusHandlerResult mpris_message_handler(DBusConnection *conn, DBusMessage *messa
         dbus_message_unref(reply);
         return result;
     }
+
     return DBUS_HANDLER_RESULT_NEED_MEMORY;
 }
 
@@ -362,16 +359,21 @@ void * mpris_main() {
         FAIL_DBUS_STARTUP_ERROR();
     }
 
-    if (!dbus_connection_register_object_path(conn, MPRIS2_PATH, &server_vtable, NULL)) {
-        SPLOGF("Failed to register the path: %s", MPRIS2_PATH);
-        FAIL_DBUS_STARTUP_ERROR();
-    }
-
     SPLOGF("MPRIS: started version: %s", version);
 
-    mainloop = g_main_loop_new(NULL, FALSE);
-    dbus_connection_setup_with_g_main(conn, NULL);
-    g_main_loop_run(mainloop);
 
+
+    DBusMessage * msg;
+    while (run) {
+        dbus_connection_read_write(conn, 0);
+        msg = dbus_connection_pop_message(conn);
+        if (NULL == msg) {
+            sleep(0.1);
+            continue;
+        }
+        mpris_message_handler(conn, msg, 0);
+        dbus_message_unref(msg);
+    }
+    
     return NULL;
 }
