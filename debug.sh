@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# File:   build.sh
+# File:   debug.sh
 # Author: Mario Aichinger <aichingm@gmail.com>
 #
-# Created on July 12, 2017, 10:03 PM
+# Created on July 12, 2017, 1:36 PM
 #
 #  splay is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with splay.  If not, see <http://www.gnu.org/licenses/>.
 
-gcc src/splay.c -o splay -lncurses -lvlc -pthread
-
-chmod +x splay
+gcc -g -D DEBUG=1 \
+    src/splay.c -o splay \
+    -lncurses \
+    -lvlc \
+    -pthread

@@ -12,15 +12,14 @@ To build splay clone the git repo and change into it
 git clone https://github.com/aichingm/splay && cd splay
 ```
 
-and run
+and run one of the four build options:
 
-```shell
-./build.sh
-```
+1. The tiny version`./build.sh` 
+2. A version with enabled MPRIS support: `./build-with-mpris.sh`
+3. _A debugging version for the the 1. option ./`debug.sh`_
+4. _A debugging version for the 2. option ./`debug-with-mpris.sh`_
 
-`build.sh` will create a binary called *splay* in the cwd.
-
-
+this will create a binary called in the _cwd_ *splay*.
 
 ## Install splay
 
@@ -32,6 +31,8 @@ In order to run (and build) you need **all** of the below listed libraries on yo
 
 - libvlc 
 - ncurses 
+- dbus (only for build with MPRS support)
+- glib (only for build with MPRS support)
 
 
 
