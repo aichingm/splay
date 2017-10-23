@@ -14,10 +14,10 @@ git clone https://github.com/aichingm/splay && cd splay
 
 and run one of the four build options:
 
-1. The tiny version`./build.sh` 
-2. A version with enabled MPRIS support: `./build-with-mpris.sh`
-3. _A debugging version for the the 1. option ./`debug.sh`_
-4. _A debugging version for the 2. option ./`debug-with-mpris.sh`_
+1. The tiny version`make build` 
+2. A version with enabled MPRIS support: `make build-mpris`
+3. _A debugging version for the the 1. option `make debug`_
+4. _A debugging version for the 2. option `make dbbug-mpris`_
 
 this will create a binary called in the _cwd_ *splay*.
 
