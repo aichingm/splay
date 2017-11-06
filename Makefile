@@ -1,6 +1,6 @@
 .PHONY : build
 build :
-	gcc src/splay.c -o splay -lncurses -lvlc -pthread
+	gcc src/splay.c -o splay -lncurses -ltinfo -lvlc -pthread
 
 	chmod +x splay
 	
@@ -11,6 +11,7 @@ build-mpris :
 		    -I/usr/lib/dbus-1.0/include  \
 		    -ldbus-1 \
 		    -lncurses \
+		    -ltinfo \
 		    -lvlc \
 		    -pthread
 
@@ -18,19 +19,19 @@ build-mpris :
 	
 .PHONY : debug
 debug :
-	gcc src/splay.c -o splay -lncurses -lvlc -pthread
+	gcc src/splay.c -o splay -lncurses -ltinfo -lvlc -pthread
 
 	chmod +x splay
 	
 .PHONY : debug-mpris
 dbug-mpris :
-	gcc -D DEBUG=1 \
-	    src/splay-mpris.c -o splay \
-            -I/usr/include/dbus-1.0 \
-            -I/usr/lib/dbus-1.0/include  \
-            -ldbus-1 \
-            -lncurses \
-	    -pthread
+	gcc -D DEBUG=1 src/splay-mpris.c -o splay \
+		-I/usr/include/dbus-1.0 \
+		-I/usr/lib/dbus-1.0/include  \
+		-ldbus-1 \
+		-lncurses \
+		-ltinfo \
+		-pthread
 
 	chmod +x splay
 

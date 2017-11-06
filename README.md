@@ -23,7 +23,7 @@ this will create a binary called in the _cwd_ *splay*.
 
 ## Install splay
 
-Just move the *splay* binary in any of  the directories which are in your `$PATH`.
+Just move the *splay* binary in any of the directories which are in your `$PATH`.
 
 **No don't actually do this!** Move it for example to `/usr/local/bin` or create a `bin` directory in your `~` and add it to your `$PATH` 
 
@@ -31,6 +31,7 @@ In order to run (and build) you need **some** of the below listed libraries on y
 
 - libvlc 
 - ncurses 
+- libtinfo
 - dbus (only for build with MPRS support)
 
 
