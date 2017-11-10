@@ -120,6 +120,7 @@ int fl_mvd(struct SPlay *sp) {
     if (fl_selected_offscreen(sp)) {
         sp->fl->offset++;
     }
+    return 1;
 }
 
 int fl_mvu(struct SPlay *sp) {
@@ -130,6 +131,7 @@ int fl_mvu(struct SPlay *sp) {
     if (fl_selected_offscreen(sp)) {
         sp->fl->offset--;
     }
+    return 1;
 }
 
 int fl_can_mvu(struct SPlay *sp) {
@@ -166,8 +168,6 @@ int fl_has_osd(struct SPlay *sp) {
 
 char * trktitle(struct SPlay *sp, int index) {
     char * title = NULL;
-    int error = 0;
-
     if (sp->title_mode == TITLE_MODE_TITLE_ARTIST) {
         char * t;
         char * artist;
@@ -274,6 +274,7 @@ int printlist(struct SPlay * sp) { /* Print List */
     if (fl_has_osd(sp)) {
         mvwaddstr(sp->win, fl_visible_lines(), 1, "v");
     }
+    return 0;
 }
 
 void printinfln(struct SPlay * sp) {
@@ -520,8 +521,6 @@ int main(void) {
         /*
          * Info Line setup
          */
-        int * retval;
-        retval = (int *) malloc(4);
         pthread_t tid;
         pthread_attr_t attr;
         pthread_attr_init(&attr);

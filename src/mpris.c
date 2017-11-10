@@ -47,8 +47,6 @@ struct SPlay *splay;
 int run = 1;
 
 void mpris_spawn() {
-    int * retval;
-    retval = (int *) malloc(4);
     pthread_t tid;
     pthread_create(&tid, NULL, mpris_main, 0);
 }
@@ -244,7 +242,7 @@ DBusHandlerResult mpris_message_handler(DBusConnection *conn, DBusMessage *messa
 
     dbus_error_init(&err);
     if (METHOD_CALL_II("Introspect")) {
-        if (reply = dbus_message_new_method_return(message)) {
+        if ((reply = dbus_message_new_method_return(message))) {
             dbus_message_append_args(reply,
                     DBUS_TYPE_STRING, &server_introspection_xml,
                     DBUS_TYPE_INVALID);
@@ -324,7 +322,7 @@ DBusHandlerResult mpris_message_handler(DBusConnection *conn, DBusMessage *messa
             dbus_message_unref(reply);
         }
         reply = dbus_message_new_error(message, err.name, err.message);
-        SPLOGF("MPRIS: Error: %s, Message", err.name, err.message);
+        SPLOGF("MPRIS: Error: %s, Message: %s", err.name, err.message);
         dbus_error_free(&err);
     }
 

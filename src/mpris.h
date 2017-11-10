@@ -49,8 +49,17 @@ char * get_meta(struct SPlay *splay, libvlc_meta_t tag) {
 }
 
 int get_duration(struct SPlay *splay) {
+    if(splay->plyr->curr_playing_index == -1){
+        splog("ERROR: curr_playing_index = -1 dont try to get libvlc_media_list_item_at_index with -1");
+        return 0;
+    }
     libvlc_media_t * media = libvlc_media_list_item_at_index(splay->plyr->mpl, splay->plyr->curr_playing_index);
-    int d = libvlc_media_get_duration(media)*1000;
+    if(media == NULL){
+        //why does this happen?
+        SPLOGF("ERROR: media for libvlc_media_get_duration is null curr_playing_index = %d", splay->plyr->curr_playing_index);
+        return 0;
+    }
+    int d = libvlc_media_get_duration(media) * 1000;
     libvlc_media_release(media);
     return d;
 }
@@ -241,7 +250,7 @@ int get_duration(struct SPlay *splay) {
         dbus_uint32_t serial = 0;\
         DBusMessage* REPLY;\
         DBusMessageIter ITERATOR;\
-        if (REPLY = dbus_message_new_signal(PATH, DOMAIN, SIG_NAME)){ \
+        if ((REPLY = dbus_message_new_signal(PATH, DOMAIN, SIG_NAME))){ \
         dbus_message_iter_init_append(REPLY, &ITERATOR);\
         
 
