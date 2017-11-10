@@ -260,7 +260,7 @@ int printlist(struct SPlay * sp) { /* Print List */
             && i < libvlc_media_list_count(sp->plyr->mpl) + sp->fl->offset; i++) {
 
         if (i + sp->fl->offset == sp->fl->selected) {
-            wattron(sp->win, COLOR_PAIR(1));
+            wattron(sp->win, COLOR_PAIR(3));
             wattron(sp->win, A_BOLD);
         }
         printtrkln(sp, i + sp->fl->offset, i + 1);
@@ -510,8 +510,9 @@ int main(void) {
         cbreak();
         keypad(stdscr, 1);
         start_color();
-        init_pair(1, COLOR_YELLOW, COLOR_BLUE);
-        init_pair(2, COLOR_BLUE, COLOR_WHITE);
+        init_pair(1, FG_SCR, BG_SCR);
+        init_pair(2, FG_WIN, BG_WIN);
+        init_pair(3, FG_ACT, BG_ACT);
         bkgd(COLOR_PAIR(1));
 
         sp->win = newwin(LINES - 3, COLS - 2, 1, 1);

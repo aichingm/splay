@@ -1,6 +1,6 @@
 # s[hell]play
 
-​splay is the only :notes: player I need. It is made for me by me and I :heart: it. It is :penguin: only.
+splay is the only :notes: player I need. It is made for me by me and I :heart: it. It is :penguin: only.
 
 
 
@@ -20,6 +20,10 @@ and run one of the four build options:
 4. _A debugging version for the 2. option `make dbbug-mpris`_
 
 this will create a binary called in the _cwd_ *splay*.
+
+## Colorize splay
+
+To change the colors edit the color definitions in `src/colors.h` and rebuild splay.
 
 ## Install splay
 

@@ -22,6 +22,7 @@
 
 #include <stdlib.h>
 #include <curses.h>
+#include "colors.h"
 
 
 #ifndef SPLAY_H
