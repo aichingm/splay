@@ -25,8 +25,11 @@
 
 #include <stdio.h>
 #include <dbus-1.0/dbus/dbus-protocol.h>
+#include <unistd.h> /* for usleep */
 
 #include "logging.h"
+#include "splay.h"
+
 
 
 void* mpris_main();
@@ -38,7 +41,24 @@ void* mpris_main();
 
 #define PROPERTY_IS(PROPERTY) !strcmp(property, PROPERTY)
 
-#define GET_META(TAG) libvlc_media_get_meta(libvlc_media_list_item_at_index(splay->plyr->mpl, splay->plyr->curr_playing_index), TAG)
+char * get_meta(struct SPlay *splay, libvlc_meta_t tag) {
+    libvlc_media_t * media = libvlc_media_list_item_at_index(splay->plyr->mpl, splay->plyr->curr_playing_index);
+    char * meta = libvlc_media_get_meta(media, tag);
+    libvlc_media_release(media);
+    return meta;
+}
+
+int get_duration(struct SPlay *splay) {
+    libvlc_media_t * media = libvlc_media_list_item_at_index(splay->plyr->mpl, splay->plyr->curr_playing_index);
+    int d = libvlc_media_get_duration(media)*1000;
+    libvlc_media_release(media);
+    return d;
+}
+
+
+#define GET_META(TAG) get_meta(splay, TAG)
+
+
 
 #define METHOD_CALL_II(NAME) dbus_message_is_method_call(message, DBUS_INTERFACE_INTROSPECTABLE, NAME)
 #define METHOD_CALL_P(NAME) dbus_message_is_method_call(message, DBUS_INTERFACE_PROPERTIES, NAME)
@@ -225,15 +245,27 @@ void* mpris_main();
         dbus_message_iter_init_append(REPLY, &ITERATOR);\
         
 
-
+/*
+ * Sometimes ibvlc fires an event before dbus started the for loop will delay if the connection conn is not jet set
+ */
 #define SIGNAL_CLOSE(CONNECTION, REPLY) \
-            if(dbus_connection_send(CONNECTION, REPLY, &serial)){ \
-                dbus_connection_flush(CONNECTION); \
+            int sent = 0; \
+            for(int i = 0; i < 10 && !sent; i++){ \
+                if(CONNECTION != NULL){ \
+                    if(dbus_connection_send(CONNECTION, REPLY, &serial)){ \
+                        dbus_connection_flush(CONNECTION); \
+                    } \
+                    dbus_message_unref(REPLY); \
+                    sent = 1; \
+                } else{ \
+                    usleep(100000);splog("signal delayed");  \
+                } \
             } \
-            dbus_message_unref(REPLY); \
+            if(!sent){ \
+                splog("failed to send signal"); \
+            } \
         } \
    } \
-
 
 #endif 
 

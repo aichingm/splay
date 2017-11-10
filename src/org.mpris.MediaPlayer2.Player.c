@@ -34,6 +34,10 @@ void mediaplayer2_player_set_splay(struct SPlay *sp) {
 
 DBusHandlerResult mediaplayer2_player_property_handler(const char *property, DBusConnection *conn, DBusMessage *reply) {
     SPLOGF("Player call: %s", property);
+    char * title = NULL;
+    char * album = NULL;
+    char * art_url = NULL;
+    char * artist = NULL;
 
     if (PROPERTY_IS("CanGoNext")) {
         OPEN_ITER(reply, iter);
@@ -87,24 +91,24 @@ DBusHandlerResult mediaplayer2_player_property_handler(const char *property, DBu
         //ADD_DICT_OF_STRING_STRING_FORM_X(array, "mpris:trackid", splay->plyr->curr_playing_index, "%d", 64)
             ADD_DICT_OF_STRING_OBJECT(array, "mpris:trackid", "/org/mpris/MediaPlayer2/Player/track_xxx")
 
-        ADD_DICT_OF_STRING_SIGNED_INT(array, "mpris:length", libvlc_media_get_duration(libvlc_media_list_item_at_index(splay->plyr->mpl, splay->plyr->curr_playing_index))*1000)
+        ADD_DICT_OF_STRING_SIGNED_INT(array, "mpris:length", get_duration(splay))
 
-                void * title = GET_META(libvlc_meta_Title);
+        title = GET_META(libvlc_meta_Title);
         if (title) {
             ADD_DICT_OF_STRING_STRING(array, "mpris:title", title)
         }
-        void * artist = GET_META(libvlc_meta_Artist);
+        artist = GET_META(libvlc_meta_Artist);
         if (artist) {
             ADD_DICT_OF_STRING_ARRAY_OF_STRING_OPEN(array, "mpris:artist", Artist)
             ADD_STRING(Artist, artist)
             ADD_DICT_OF_STRING_ARRAY_OF_STRING_CLOSE(array, Artist)
         }
-        void * album = GET_META(libvlc_meta_Album);
+        album = GET_META(libvlc_meta_Album);
         if (album) {
             ADD_DICT_OF_STRING_STRING(array, "mpris:album", album)
         }
 
-        void * art_url = GET_META(libvlc_meta_ArtworkURL);
+        art_url = GET_META(libvlc_meta_ArtworkURL);
         if (art_url) {
             ADD_DICT_OF_STRING_STRING(array, "mpris:artUrl", art_url)
         }
@@ -115,13 +119,22 @@ DBusHandlerResult mediaplayer2_player_property_handler(const char *property, DBu
         /* not a property */
         return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     }
+
     if (dbus_connection_send(conn, reply, NULL)) {
         return DBUS_HANDLER_RESULT_HANDLED;
     }
+    free(title);
+    free(artist);
+    free(art_url);
+    free(album);
     return DBUS_HANDLER_RESULT_NEED_MEMORY;
 }
 
-DBusHandlerResult mediaplayer2_player_all_properties_handler_(DBusConnection *conn, DBusMessage *reply) {
+DBusHandlerResult mediaplayer2_player_all_properties_handler(DBusConnection *conn, DBusMessage *reply) {
+    char * title = NULL;
+    char * album = NULL;
+    char * art_url = NULL;
+    char * artist = NULL;
     DBusHandlerResult result;
     DBusMessageIter array, iter;
     result = DBUS_HANDLER_RESULT_NEED_MEMORY;
@@ -142,37 +155,40 @@ DBusHandlerResult mediaplayer2_player_all_properties_handler_(DBusConnection *co
     ADD_DICT_OF_STRING_STRING(array, "PlaybackStatus", libvlc_media_player_is_playing(splay->plyr->mp) ? "Playing" : "Paused")
     ADD_DICT_OF_STRING_SIGNED_INT(array, "Position", libvlc_media_player_get_time(splay->plyr->mp)*1000)
 
-
     ADD_DICT_OF_ARRAY_OF_STRING_VARIANT_OPEN(array, "Metadata", Metadata)
-    //ADD_DICT_OF_STRING_STRING_FORM_X(Metadata, "mpris:trackid", splay->plyr->curr_playing_index, "%d", 64)
     ADD_DICT_OF_STRING_OBJECT(Metadata, "mpris:trackid", "/org/mpris/MediaPlayer2/Player/track_xxx")
-    ADD_DICT_OF_STRING_SIGNED_INT(Metadata, "mpris:length", libvlc_media_get_duration(libvlc_media_list_item_at_index(splay->plyr->mpl, splay->plyr->curr_playing_index))*1000)
+    ADD_DICT_OF_STRING_SIGNED_INT(Metadata, "mpris:length", get_duration(splay))
 
-            void * title = GET_META(libvlc_meta_Title);
+    title = GET_META(libvlc_meta_Title);
     if (title) {
         ADD_DICT_OF_STRING_STRING(Metadata, "xesam:title", title)
     }
-    void * artist = GET_META(libvlc_meta_Artist);
+    artist = GET_META(libvlc_meta_Artist);
     if (artist) {
         ADD_DICT_OF_STRING_ARRAY_OF_STRING_OPEN(Metadata, "xesam:artist", Artist)
         ADD_STRING(Artist, artist)
         ADD_DICT_OF_STRING_ARRAY_OF_STRING_CLOSE(Metadata, Artist)
     }
-    void * album = GET_META(libvlc_meta_Album);
+    album = GET_META(libvlc_meta_Album);
     if (album) {
         ADD_DICT_OF_STRING_STRING(Metadata, "xesam:album", album)
     }
 
-    void * art_url = GET_META(libvlc_meta_ArtworkURL);
+    art_url = GET_META(libvlc_meta_ArtworkURL);
     if (art_url) {
         ADD_DICT_OF_STRING_STRING(Metadata, "mpris:artUrl", art_url)
     }
 
-
     ADD_DICT_OF_ARRAY_OF_STRING_VARIANT_CLOSE(array, Metadata)
 
     dbus_message_iter_close_container(&iter, &array);
-    if (dbus_connection_send(conn, reply, NULL))
+
+    if (dbus_connection_send(conn, reply, NULL)) {
         result = DBUS_HANDLER_RESULT_HANDLED;
+    }
+    free(title);
+    free(artist);
+    free(art_url);
+    free(album);
     return result;
 }

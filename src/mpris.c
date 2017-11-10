@@ -46,7 +46,6 @@ DBusConnection *conn;
 struct SPlay *splay;
 int run = 1;
 
-
 void mpris_spawn() {
     int * retval;
     retval = (int *) malloc(4);
@@ -57,7 +56,6 @@ void mpris_spawn() {
 void mpris_shutdown() {
     run = 0;
 }
-
 
 const char *server_introspection_xml =
         DBUS_INTROSPECT_1_0_XML_DOCTYPE_DECL_NODE
@@ -154,9 +152,9 @@ void mpris_set_splay(struct SPlay *sp) {
     splay = sp;
     mediaplayer2_set_splay(sp);
     mediaplayer2_player_set_splay(sp);
-    libvlc_event_manager_t* emmlp = libvlc_media_list_player_event_manager(sp->plyr->mplp);
+    libvlc_event_manager_t* emmlp = libvlc_media_list_player_event_manager(sp->plyr->mplp); /* do not free the manager */
     libvlc_event_attach(emmlp, libvlc_MediaListPlayerNextItemSet, mpris_libvlc_event, sp);
-    libvlc_event_manager_t* emmp = libvlc_media_player_event_manager(sp->plyr->mp);
+    libvlc_event_manager_t* emmp = libvlc_media_player_event_manager(sp->plyr->mp); /* do not free the manager */
     libvlc_event_attach(emmp, libvlc_MediaPlayerPaused, mpris_libvlc_event, sp);
     libvlc_event_attach(emmp, libvlc_MediaPlayerPlaying, mpris_libvlc_event, sp);
     libvlc_event_attach(emmp, libvlc_MediaPlayerEndReached, mpris_libvlc_event, sp);
@@ -167,7 +165,7 @@ void mpris_set_splay(struct SPlay *sp) {
  */
 void mpris_libvlc_event(const struct libvlc_event_t* event, void* sp) {
 
-    SPLOGF("%d", event->type)
+    //SPLOGF("%d", event->type)
     if (libvlc_MediaPlayerPlaying == event->type || libvlc_MediaPlayerPaused == event->type) {
         SIGNAL_OPEN(reply, iter, "/org/mpris/MediaPlayer2", "org.freedesktop.DBus.Properties", "PropertiesChanged")
         ADD_STRING(iter, "org.mpris.MediaPlayer2.Player")
@@ -192,24 +190,28 @@ void mpris_libvlc_event(const struct libvlc_event_t* event, void* sp) {
         ADD_DICT_OF_STRING_OBJECT(Metadata, "mpris:trackid", "/org/mpris/MediaPlayer2/Player/track_xxx")
 
         //ADD_DICT_OF_STRING_STRING_FORM_X(Metadata, "mpris:trackid", splay->plyr->curr_playing_index, "%d", 64)
-        ADD_DICT_OF_STRING_SIGNED_INT(Metadata, "mpris:length", libvlc_media_get_duration(libvlc_media_list_item_at_index(splay->plyr->mpl, splay->plyr->curr_playing_index))*1000)
+        ADD_DICT_OF_STRING_SIGNED_INT(Metadata, "mpris:length", get_duration(splay))
                 void * title = GET_META(libvlc_meta_Title);
         if (title) {
             ADD_DICT_OF_STRING_STRING(Metadata, "xesam:title", title)
+            free(title);
         }
         void * artist = GET_META(libvlc_meta_Artist);
         if (artist) {
             ADD_DICT_OF_STRING_ARRAY_OF_STRING_OPEN(Metadata, "xesam:artist", Artist)
             ADD_STRING(Artist, artist)
             ADD_DICT_OF_STRING_ARRAY_OF_STRING_CLOSE(Metadata, Artist)
+            free(artist);
         }
         void * album = GET_META(libvlc_meta_Album);
         if (album) {
             ADD_DICT_OF_STRING_STRING(Metadata, "xesam:album", album)
+            free(album);
         }
         void * art_url = GET_META(libvlc_meta_ArtworkURL);
         if (art_url) {
             ADD_DICT_OF_STRING_STRING(Metadata, "mpris:artUrl", art_url)
+            free(art_url);
         }
         ADD_DICT_OF_ARRAY_OF_STRING_VARIANT_CLOSE(array, Metadata)
         ADD_DICT_OF_STRING_BOOLEAN(array, "CanGoNext", ply_hasn(splay))
@@ -274,7 +276,7 @@ DBusHandlerResult mpris_message_handler(DBusConnection *conn, DBusMessage *messa
                 dbus_message_unref(reply);
                 return result;
             } else if (STR_EQUALS(interface, "org.mpris.MediaPlayer2.Player")) {
-                result = mediaplayer2_player_all_properties_handler_(conn, reply);
+                result = mediaplayer2_player_all_properties_handler(conn, reply);
                 dbus_message_unref(reply);
                 return result;
             } else {
@@ -349,7 +351,6 @@ void * mpris_main() {
         FAIL_DBUS_STARTUP_ERROR();
     }
 
-
     int retval;
     char domain[50];
     snprintf(domain, 50, "org.mpris.MediaPlayer2.splay_%d", getpid());
@@ -361,19 +362,17 @@ void * mpris_main() {
 
     SPLOGF("MPRIS: started version: %s", version);
 
-
-
     DBusMessage * msg;
     while (run) {
         dbus_connection_read_write(conn, 0);
         msg = dbus_connection_pop_message(conn);
-        if (NULL == msg) {
+        if (msg == NULL) {
             sleep(0.1);
             continue;
         }
         mpris_message_handler(conn, msg, 0);
         dbus_message_unref(msg);
     }
-    
+
     return NULL;
 }

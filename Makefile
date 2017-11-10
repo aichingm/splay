@@ -38,7 +38,7 @@ debug :
 	chmod +x splay
 
 .PHONY : debug-mpris
-dbug-mpris :
+debug-mpris :
 	gcc -D DEBUG=1 src/splay-mpris.c -o splay \
 		-I/usr/include/dbus-1.0 \
 		-I/usr/lib/dbus-1.0/include  \

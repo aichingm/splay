@@ -180,6 +180,7 @@ char * trktitle(struct SPlay *sp, int index) {
             strcat(title, " - ");
             strcat(title, artist);
             free(artist);
+            free(t);
         }
     } else if (sp->title_mode == TITLE_MODE_TITLE) {
         char * t = libvlc_media_get_meta(libvlc_media_list_item_at_index(sp->plyr->mpl, index), libvlc_meta_Title);
@@ -187,6 +188,7 @@ char * trktitle(struct SPlay *sp, int index) {
             title = malloc(strlen(t)+1);
             title[0] = '\0';
             strcat(title, t);
+            free(t);
         }
     }else if(sp->title_mode == TITLE_MODE_PATH){
         char * t = libvlc_media_get_mrl(libvlc_media_list_item_at_index(sp->plyr->mpl, index));
@@ -200,6 +202,7 @@ char * trktitle(struct SPlay *sp, int index) {
             strcat(title, basename(dup_t));
             decode_URI(title);
             free(dup_t);
+            free(t);
         }
     }
 
@@ -209,6 +212,7 @@ char * trktitle(struct SPlay *sp, int index) {
         title[0] = '\0';
         strcat(title, basename(t));
         decode_URI(title);
+        free(t);
     }
 
     return title;
@@ -276,7 +280,9 @@ void printinfln(struct SPlay * sp) {
     if (sp->plyr->curr_playing_index == -1) {
         return;
     }
-    int dur = libvlc_media_get_duration(libvlc_media_list_item_at_index(sp->plyr->mpl, sp->plyr->curr_playing_index));
+    libvlc_media_t * media = libvlc_media_list_item_at_index(sp->plyr->mpl, sp->plyr->curr_playing_index);
+    int dur = libvlc_media_get_duration(media);
+    libvlc_media_release(media);
     int now = libvlc_media_player_get_time(sp->plyr->mp);
     if (dur != -1 && now != -1) {
         char time [13];
@@ -546,7 +552,10 @@ int main(void) {
                     break;
                 case KEY_RIGHT:
                     time = libvlc_media_player_get_time(sp->plyr->mp);
-                    if (time + SEEK_DURATION < libvlc_media_get_duration(libvlc_media_list_item_at_index(sp->plyr->mpl, sp->plyr->curr_playing_index))) {
+                    libvlc_media_t * media = libvlc_media_list_item_at_index(sp->plyr->mpl, sp->plyr->curr_playing_index);
+                    int dur = libvlc_media_get_duration(media);
+                    libvlc_media_release(media);
+                    if (time + SEEK_DURATION < dur) {
                         libvlc_media_player_set_time(sp->plyr->mp, time + SEEK_DURATION);
                     }
                     printinfln(sp);

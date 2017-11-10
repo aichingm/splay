@@ -33,7 +33,6 @@ void mediaplayer2_set_splay(struct SPlay *sp) {
     splay = sp;
 }
 
-
 DBusHandlerResult mediaplayer2_property_handler(const char *property, DBusConnection *conn, DBusMessage *reply) {
     SPLOGF("%s", property);
     if (PROPERTY_IS("CanQuit") || PROPERTY_IS("CanRaise") || PROPERTY_IS("HasTrackList")) {
