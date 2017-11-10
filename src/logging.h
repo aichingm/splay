@@ -47,7 +47,8 @@ void splog(char *s) {
 
 void splogi(int i) {
     FILE *f = fopen(LOGGING_FILE, "a+");
-    char s [17];
+    char s [18];
+    s[17] = '\0';
     sprintf(s, "%016d\n", i);
     fwrite(s, 17, 1, f);
     fclose(f);

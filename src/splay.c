@@ -25,12 +25,16 @@
 #include <string.h>
 #include <libgen.h>
 #include <vlc/vlc.h>
+
+#include <vlc/plugins/vlc_common.h>
+#include <vlc/plugins/vlc_url.h>
 #include <locale.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <limits.h>
+#include <libgen.h>
 
 #include "splay.h"
 #include "logging.h"
@@ -160,31 +164,90 @@ int fl_has_osd(struct SPlay *sp) {
  * Printing
  */
 
+char * trktitle(struct SPlay *sp, int index) {
+    char * title = NULL;
+    int error = 0;
 
-void printtrkln(struct SPlay *sp, char *file, int line) { /* Print Track Line */
+    if (sp->title_mode == TITLE_MODE_TITLE_ARTIST) {
+        char * t;
+        char * artist;
+        t = libvlc_media_get_meta(libvlc_media_list_item_at_index(sp->plyr->mpl, index), libvlc_meta_Title);
+        artist = libvlc_media_get_meta(libvlc_media_list_item_at_index(sp->plyr->mpl, index), libvlc_meta_Artist);
+        if(t != NULL && artist != NULL) {
+            title = malloc(strlen(t)+3+strlen(artist)+1);
+            title[0] = '\0';
+            strcat(title, t);
+            strcat(title, " - ");
+            strcat(title, artist);
+            free(artist);
+        }
+    } else if (sp->title_mode == TITLE_MODE_TITLE) {
+        char * t = libvlc_media_get_meta(libvlc_media_list_item_at_index(sp->plyr->mpl, index), libvlc_meta_Title);
+        if(t != NULL){
+            title = malloc(strlen(t)+1);
+            title[0] = '\0';
+            strcat(title, t);
+        }
+    }else if(sp->title_mode == TITLE_MODE_PATH){
+        char * t = libvlc_media_get_mrl(libvlc_media_list_item_at_index(sp->plyr->mpl, index));
+        if(t != NULL){
+            char * dup_t = strdup(t);
+            title = malloc(strlen(t)+1);
+            title[0] = '\0';
+            strcpy(title, dirname(t));
+            strcpy(title, basename(title));
+            strcat(title, "/");
+            strcat(title, basename(dup_t));
+            decode_URI(title);
+            free(dup_t);
+        }
+    }
 
-    char *name;
-    if (sp->plyr->curr_playing_index == (line - 1 + sp->fl->offset)) { //cheating, this should be i from the loop
+    if(title == NULL || sp->title_mode == TITLE_MODE_FILE){
+        char * t = libvlc_media_get_mrl(libvlc_media_list_item_at_index(sp->plyr->mpl, index));
+        title = malloc(strlen(t)+1);
+        title[0] = '\0';
+        strcat(title, basename(t));
+        decode_URI(title);
+    }
+
+    return title;
+}
+
+void printtrkln(struct SPlay *sp, int index, int line) { /* Print Track Line */
+
+    char * name;
+    char * title = trktitle(sp, index);
+    if (sp->plyr->curr_playing_index == index) {
         wattron(sp->win, A_BOLD);
         if (sp->plyr->curr_playing_index > -1 && sp->plyr->is_playing == 1) {
-            if ((name = malloc(strlen("[playing] ") + strlen(file) + 1)) != NULL) {
+            if ((name = malloc(strlen("[playing] ") + strlen(title) + 1)) != NULL) {
                 name[0] = '\0';
                 strcat(name, "[playing] ");
-                strcat(name, file);
+                strcat(name, title);
             }
         } else {
-            if ((name = malloc(strlen("[pause] ") + strlen(file) + 1)) != NULL) {
+            if ((name = malloc(strlen("[pause] ") + strlen(title) + 1)) != NULL) {
                 name[0] = '\0';
                 strcat(name, "[pause] ");
-                strcat(name, file);
+                strcat(name, title);
             }
         }
     } else {
-        name = file;
+        name = malloc(strlen(title)+1);
+        strcpy(name, title);
     }
-
+    int x = getmaxx(sp->win);
+    if(x-8 < strlen(name)){
+        name[x - 8] = '.';
+        name[x - 7] = '.';
+        name[x - 6] = '.';
+        name[x - 5] = '\0';
+    }
     mvwaddstr(sp->win, line, 3, name);
     wattroff(sp->win, A_BOLD);
+    free(name);
+    free(title);
 
 }
 
@@ -196,7 +259,7 @@ int printlist(struct SPlay * sp) { /* Print List */
             wattron(sp->win, COLOR_PAIR(1));
             wattron(sp->win, A_BOLD);
         }
-        printtrkln(sp, libvlc_media_get_meta(libvlc_media_list_item_at_index(sp->plyr->mpl, i + sp->fl->offset), libvlc_meta_Title), i + 1);
+        printtrkln(sp, i + sp->fl->offset, i + 1);
         wattroff(sp->win, COLOR_PAIR(2));
         wattroff(sp->win, A_BOLD);
     }
@@ -216,7 +279,7 @@ void printinfln(struct SPlay * sp) {
     int dur = libvlc_media_get_duration(libvlc_media_list_item_at_index(sp->plyr->mpl, sp->plyr->curr_playing_index));
     int now = libvlc_media_player_get_time(sp->plyr->mp);
     if (dur != -1 && now != -1) {
-        char time [12];
+        char time [13];
         struct tm *tm = milstotime(dur);
         int dur_min = tm->tm_min;
         int dur_sec = tm->tm_sec;
@@ -225,17 +288,24 @@ void printinfln(struct SPlay * sp) {
         int now_sec = tm->tm_sec;
         sprintf(time, "%02d:%02d/%02d:%02d", now_min, now_sec, dur_min, dur_sec);
         time[12] = '\0';
-        char *title = libvlc_media_get_meta(libvlc_media_list_item_at_index(sp->plyr->mpl, sp->plyr->curr_playing_index), libvlc_meta_Title);
+        char *title = trktitle(sp, sp->plyr->curr_playing_index);
+        int x = getmaxx(sp->win);
+        if(x - 15 < strlen(title)){
+            title[x - 15] = '.';
+            title[x - 14] = '.';
+            title[x - 13] = '.';
+            title[x - 12] = '\0';
+        }
         move(LINES - 1, 1);
         clrtoeol();
         mvaddstr(LINES - 1, 1, title);
         mvaddstr(LINES - 1, COLS - 12, time);
         refresh();
+        free(title);
     }
 }
 
 void printwin(struct SPlay * sp) {
-
     wclear(sp->win);
     wattrset(sp->win, A_UNDERLINE);
     wbkgd(sp->win, COLOR_PAIR(2));
@@ -341,7 +411,6 @@ void* inf_thrd(void *ptr) {
 /*
  * Shutdown
  */
-
 void splay_shutdown(struct SPlay * sp) {
     delwin(sp->win);
     endwin();
@@ -379,25 +448,23 @@ void shutdown_mpris(struct SPlay *splay) {
 /*
  * Main
  */
-
 int main(void) {
+
 #ifdef DEBUG
     printf("Splay will now wait for 10 seconds in which you can connect a debugger with run 'gdb ./splay %d' \n", getpid());
     sleep(10);
 #endif
 
-
     setlocale(LC_ALL, "");
 
     struct SPlay *sp = splay_new();
+    sp->title_mode = TITLE_MODE_TITLE;
     sp->plyr->inst = libvlc_new(0, NULL);
     sp->plyr->mp = libvlc_media_player_new(sp->plyr->inst);
     sp->plyr->mpl = libvlc_media_list_new(sp->plyr->inst);
     sp->plyr->mplp = libvlc_media_list_player_new(sp->plyr->inst);
     libvlc_media_list_player_set_media_list(sp->plyr->mplp, sp->plyr->mpl);
     libvlc_media_list_player_set_media_player(sp->plyr->mplp, sp->plyr->mp);
-
-
 
     libvlc_event_manager_t* emmlp = libvlc_media_list_player_event_manager(sp->plyr->mplp);
     libvlc_event_attach(emmlp, libvlc_MediaListPlayerNextItemSet, libvlc_event, sp);
@@ -525,6 +592,14 @@ int main(void) {
                     break;
                 case 112:
                     ply_prv_no_ev_drw(sp);
+                    break;
+                case (int)'t':
+                    sp->title_mode++;
+                    if(sp->title_mode == TITLE_MODES_LENGTH){
+                        sp->title_mode = TITLE_MODE_TITLE;
+                    }
+                    printwin(sp);
+                    printinfln(sp);
                     break;
             }
         }

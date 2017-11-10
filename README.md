@@ -128,7 +128,7 @@ cat ~/Playlists/cool_songs.plist | splay
 
 #### Hit all the Keys
 
-There are only 10 defined 
+There are only 11 defined 
 
 * `e` , `end` end splay
 * `up` move the selection up
@@ -139,4 +139,5 @@ There are only 10 defined
 * `space` switch between playing and pause 
 * `left` seek ten seconds backwards
 * `right` seek ten seconds in to the future
+* `t` cycle through title display modes :arrows_counterclockwise:
 

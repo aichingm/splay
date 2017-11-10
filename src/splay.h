@@ -30,6 +30,15 @@
 
 #define STDIN_FILE "/dev/tty"
 
+/*
+ * Title Modes
+ */
+#define TITLE_MODE_TITLE 0
+#define TITLE_MODE_TITLE_ARTIST 1
+#define TITLE_MODE_PATH 2
+#define TITLE_MODE_FILE 3
+#define TITLE_MODES_LENGTH 4
+
 
 
 /*
@@ -73,6 +82,7 @@ struct List_Box {
 struct SPlay {
     struct Player *plyr;
     struct List_Box *fl;
+    int title_mode;
     WINDOW *win;
 };
 
@@ -106,9 +116,12 @@ int fl_has_osd(struct SPlay *sp);
  * Printing
  */
 
-void printtrkln(struct SPlay *sp, char *file, int line);
+char * trktitle(struct SPlay *sp, int index);
+
+void printtrkln(struct SPlay *sp, int index, int line);
 
 int printlist(struct SPlay * sp);
+
 void printinfln(struct SPlay * sp);
 
 void printwin(struct SPlay * sp);
