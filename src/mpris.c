@@ -55,9 +55,27 @@ void mpris_shutdown() {
     run = 0;
 }
 
-const char *server_introspection_xml =
+const char *server_introspection_xml_root =
         DBUS_INTROSPECT_1_0_XML_DOCTYPE_DECL_NODE
-        "<node>\n"
+        "<node>"
+        "<node name='org'/>"
+        "</node>\n";
+
+const char *server_introspection_xml_root_org =
+        DBUS_INTROSPECT_1_0_XML_DOCTYPE_DECL_NODE
+        "<node>"
+        "<node name='mpris'/>"
+        "</node>\n";
+
+const char *server_introspection_xml_root_org_mpris =
+        DBUS_INTROSPECT_1_0_XML_DOCTYPE_DECL_NODE
+        "<node>"
+        "<node name='MediaPlayer2'/>"
+        "</node>\n";
+
+const char *server_introspection_xml_root_org_mpris_MediaPlayer2 =
+        DBUS_INTROSPECT_1_0_XML_DOCTYPE_DECL_NODE
+        "<node name='MediaPlayer2'>\n"
 
         "  <interface name='org.freedesktop.DBus.Introspectable'>\n"
         "    <method name='Introspect'>\n"
@@ -145,6 +163,8 @@ const char *server_introspection_xml =
         "  <!--<interface name='org.mpris.MediaPlayer2.TrackList'>\n"
         "  </interface>-->\n"
         "</node>\n";
+
+
 
 void mpris_set_splay(struct SPlay *sp) {
     splay = sp;
@@ -243,10 +263,23 @@ DBusHandlerResult mpris_message_handler(DBusConnection *conn, DBusMessage *messa
     dbus_error_init(&err);
     if (METHOD_CALL_II("Introspect")) {
         if ((reply = dbus_message_new_method_return(message))) {
-            dbus_message_append_args(reply,
-                    DBUS_TYPE_STRING, &server_introspection_xml,
+            if(STR_EQUALS(dbus_message_get_path(message), "/org")){
+                dbus_message_append_args(reply,
+                    DBUS_TYPE_STRING, &server_introspection_xml_root_org,
                     DBUS_TYPE_INVALID);
-
+            }else  if(STR_EQUALS(dbus_message_get_path(message), "/org/mpris")){
+                 dbus_message_append_args(reply,
+                    DBUS_TYPE_STRING, &server_introspection_xml_root_org_mpris,
+                    DBUS_TYPE_INVALID);
+            }else  if(STR_EQUALS(dbus_message_get_path(message), "/org/mpris/MediaPlayer2")){
+                 dbus_message_append_args(reply,
+                    DBUS_TYPE_STRING, &server_introspection_xml_root_org_mpris_MediaPlayer2,
+                    DBUS_TYPE_INVALID);
+            }else{
+                dbus_message_append_args(reply,
+                    DBUS_TYPE_STRING, &server_introspection_xml_root,
+                    DBUS_TYPE_INVALID);
+            }
         }
     } else if (METHOD_CALL_P("Get")) {
         const char *interface, *property;
