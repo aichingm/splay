@@ -328,6 +328,8 @@ void printwin(struct SPlay * sp) {
 struct SPlay * splay_new() {
     struct SPlay *sp;
     sp = (struct SPlay*) malloc(sizeof (struct SPlay));
+    sp->prep_shutdown = 0;
+    sp->inf_thrd = -1;
     sp->fl = (struct List_Box*) malloc(sizeof (List_Box));
     sp->fl->offset = 0;
     sp->fl->selected = 0;
@@ -341,6 +343,9 @@ struct SPlay * splay_new() {
 
 void splay_delete(struct SPlay * sp) {
     free(sp->fl);
+    libvlc_media_player_release(sp->plyr->mp);
+    libvlc_media_list_release(sp->plyr->mpl);
+    libvlc_release(sp->plyr->inst);
     free(sp->plyr);
     free(sp);
 }
@@ -409,24 +414,35 @@ void ply_pp(struct SPlay * sp) {
  */
 void* inf_thrd(void *ptr) {
     struct SPlay *sp = (struct SPlay*) ptr;
-    while (1) {
+    while (sp->prep_shutdown == 0) {
         printinfln(sp);
         sleep(1);
     }
+    pthread_exit(NULL);
+    return NULL;
 }
 
 /*
  * Shutdown
  */
-void splay_shutdown(struct SPlay * sp) {
+void splay_shutdown(struct SPlay *sp) {
+    sp->prep_shutdown = 1;
+
+    //pthread_join(sp->inf_thrd, NULL);
     delwin(sp->win);
     endwin();
+    if(libvlc_media_player_is_playing(sp->plyr->mp)){
+        libvlc_media_player_stop(sp->plyr->mp);
+    }
+    if(libvlc_media_list_player_is_playing(sp->plyr->mplp)){
+        libvlc_media_list_player_stop(sp->plyr->mplp);
+    }
     splay_delete(sp);
     exit(0);
 }
 
 /*
- * VLc Event Listeners
+ * VLC Event Listeners
  */
 void libvlc_event(const struct libvlc_event_t* event, void* sp) {
     if (libvlc_MediaPlayerEndReached == event->type &&
@@ -479,6 +495,7 @@ int main(void) {
     libvlc_event_attach(emmp, libvlc_MediaPlayerEndReached, libvlc_event, sp);
 
     char buffer [PATH_MAX];
+    memset(buffer, 0, PATH_MAX);
     int status = 0;
     while ((status = lread(buffer, PATH_MAX)) == 0) {
         if (isfile(buffer)) {
@@ -488,7 +505,7 @@ int main(void) {
             libvlc_media_release(m);
         }
     }
-    
+
     // check if files are loaded
     libvlc_media_list_lock(sp->plyr->mpl);
     int loaded_files = libvlc_media_list_count(sp->plyr->mpl);
@@ -522,10 +539,7 @@ int main(void) {
         /*
          * Info Line setup
          */
-        pthread_t tid;
-        pthread_attr_t attr;
-        pthread_attr_init(&attr);
-        pthread_create(&tid, &attr, inf_thrd, sp);
+        pthread_create(&sp->inf_thrd, NULL, inf_thrd, sp);
 
 
 

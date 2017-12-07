@@ -29,7 +29,7 @@ build-mpris :
 
 .PHONY : debug
 debug :
-	gcc -g -D DEBUG=1 src/splay.c -o splay \
+	gcc -g -O0 -D DEBUG=1 src/splay.c -o splay \
 		-Wall\
 		-I/usr/include/vlc/plugins \
 		-lncurses \
@@ -42,7 +42,7 @@ debug :
 
 .PHONY : debug-mpris
 debug-mpris :
-	gcc -g -D DEBUG=1 src/splay-mpris.c -o splay \
+	gcc -g -O0 -D DEBUG=1 src/splay-mpris.c -o splay \
 		-Wall\
 		-I/usr/include/dbus-1.0 \
 		-I/usr/lib/dbus-1.0/include  \

@@ -85,6 +85,8 @@ struct SPlay {
     struct List_Box *fl;
     int title_mode;
     WINDOW *win;
+    pthread_t inf_thrd;
+    int prep_shutdown;
 };
 
 void events_block(struct Player *p);
