@@ -398,7 +398,7 @@ void * mpris_main() {
         dbus_connection_read_write(conn, 0);
         msg = dbus_connection_pop_message(conn);
         if (msg == NULL) {
-            sleep(0.1);
+            usleep(100000);
             continue;
         }
         mpris_message_handler(conn, msg, 0);
