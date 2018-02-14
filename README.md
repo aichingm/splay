@@ -2,11 +2,9 @@
 
 splay is the only :notes: player I need. It is made for me by me and I :heart: it. It is :penguin: only.
 
-
-
 ## Build splay
 
-To build splay clone the git repo and change into it
+To build splay clone the git repo, change into it
 
 ```shell
 git clone https://github.com/aichingm/splay && cd splay
@@ -19,7 +17,7 @@ and run one of the four build options:
 3. _A debugging version for the the 1. option `make debug`_
 4. _A debugging version for the 2. option `make dbbug-mpris`_
 
-this will create a binary called in the _cwd_ *splay*.
+this will create a binary in the _cwd_ called *splay*.
 
 ## Colorize splay
 
@@ -37,8 +35,6 @@ In order to run (and build) you need **some** of the below listed libraries on y
 - ncurses 
 - libtinfo
 - dbus (only for build with MPRS support)
-
-
 
 ## Play all the tunes 
 
@@ -71,8 +67,6 @@ Play all your ogg's
 ```shell
 find ~/Music/*.ogg | splay
 ```
-
-
 
 #### Advanced usage
 
@@ -128,7 +122,25 @@ Play a playlist with splay
 cat ~/Playlists/cool_songs.plist | splay
 ```
 
+#### I need my daily dose of :needle:
 
+How do I play only ogg's from interpret `<insert cool artist here>`? That's simple:
+
+```shell
+(a=<insert cool artist here>; find . -name "*.ogg" -type f -exec grep -l -i -P "ARTIST=$a\x01" {} \; | splay)
+```
+
+Since searching for tracks of fresh artists is a hard job for your spinning metal consider saving your search results to a playlist:
+
+```shell
+(a=<insert cool artist here>; find . -name "*.ogg" -type f -exec grep -l -i -P "ARTIST=$a\x01" {} \; | tee "Only_$a.plist" | splay)
+```
+
+You can now play your playlist every time you want:
+
+```shell
+cat "Only_<insert cool artist here>.plist" | splay
+```
 
 #### Hit all the Keys
 
@@ -144,4 +156,3 @@ There are only 11 defined
 * `left` seek ten seconds backwards
 * `right` seek ten seconds in to the future
 * `t` cycle through title display modes :arrows_counterclockwise:
-

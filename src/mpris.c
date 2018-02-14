@@ -282,9 +282,10 @@ DBusHandlerResult mpris_message_handler(DBusConnection *conn, DBusMessage *messa
             }
         }
     } else if (METHOD_CALL_P("Get")) {
-        const char *interface, *property;
+        char *interface, *property;
         if (dbus_message_get_args(message, &err, DBUS_TYPE_STRING, &interface, DBUS_TYPE_STRING, &property, DBUS_TYPE_INVALID) &&
                 (reply = dbus_message_new_method_return(message))) {
+            // splog(property);
             if (STR_EQUALS(interface, "org.mpris.MediaPlayer2")) {
                 result = mediaplayer2_property_handler(property, conn, reply);
             } else if (STR_EQUALS(interface, "org.mpris.MediaPlayer2.Player")) {
