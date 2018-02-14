@@ -624,6 +624,11 @@ int main(void) {
                     printwin(sp);
                     printinfln(sp);
                     break;
+                case KEY_RESIZE:
+                    clear();
+                    wresize(sp->win, LINES - 3, COLS - 2);
+                    printwin(sp);
+                    printinfln(sp);
             }
         }
     }
