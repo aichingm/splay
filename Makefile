@@ -1,14 +1,13 @@
 .PHONY : build
 build :
 	gcc src/splay.c -o splay \
-		-Wall\
+		-Wall \
 		-I/usr/include/vlc/plugins \
 		-lncurses \
 		-ltinfo \
 		-lvlc \
 		-lvlccore \
 		-pthread
-
 	chmod +x splay
 
 .PHONY : build-mpris

@@ -200,7 +200,7 @@ char * trktitle(struct SPlay *sp, int index) {
             strcpy(title, basename(title));
             strcat(title, "/");
             strcat(title, basename(dup_t));
-            decode_URI(title);
+            vlc_uri_decode(title);
             free(dup_t);
             free(t);
         }
@@ -211,7 +211,7 @@ char * trktitle(struct SPlay *sp, int index) {
         title = malloc(strlen(t)+1);
         title[0] = '\0';
         strcat(title, basename(t));
-        decode_URI(title);
+        vlc_uri_decode(title);
         free(t);
     }
 
@@ -500,7 +500,7 @@ int main(void) {
     while ((status = lread(buffer, PATH_MAX)) == 0) {
         if (isfile(buffer)) {
             libvlc_media_t *m = libvlc_media_new_path(sp->plyr->inst, buffer);
-            libvlc_media_parse(m);
+            libvlc_media_parse_with_options(m, libvlc_media_parse_local, 0);
             libvlc_media_list_add_media(sp->plyr->mpl, m);
             libvlc_media_release(m);
         }
