@@ -500,25 +500,33 @@ int main(void) {
     while ((status = lread(buffer, PATH_MAX)) == 0) {
         if (isfile(buffer)) {
             libvlc_media_t *m = libvlc_media_new_path(sp->plyr->inst, buffer);
-            libvlc_media_parse_with_options(m, libvlc_media_parse_local, 0);
+            libvlc_media_parse_with_options(m, libvlc_media_parse_local, -1);
             libvlc_media_list_add_media(sp->plyr->mpl, m);
             libvlc_media_release(m);
         }
     }
 
+
     // check if files are loaded
     libvlc_media_list_lock(sp->plyr->mpl);
     int loaded_files = libvlc_media_list_count(sp->plyr->mpl);
     libvlc_media_list_unlock(sp->plyr->mpl);
-    if (loaded_files > 0) {
+    // check if files are parsed (vlc is async now, this keeps blocking)
+    libvlc_media_t *m;
+    for(int i = 0; i < loaded_files; i++){
+        m = libvlc_media_list_item_at_index(sp->plyr->mpl, i);
+        while(libvlc_media_get_parsed_status(m) != libvlc_media_parsed_status_done){
+            sleep(0.001);
+        }
+        libvlc_media_release(m);
+    }
 
+    if (loaded_files > 0) {
 #ifdef MPRIS
         /* MPRIS setup */
         setup_mpris(sp);
 #endif
-
         freopen(STDIN_FILE, "r", stdin);
-
 
         initscr();
         clear();
@@ -534,7 +542,6 @@ int main(void) {
 
         sp->win = newwin(LINES - 3, COLS - 2, 1, 1);
         printwin(sp);
-
 
         /*
          * Info Line setup
