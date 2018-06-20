@@ -454,6 +454,15 @@ void libvlc_event(const struct libvlc_event_t* event, void* sp) {
         printinfln((struct SPlay*) sp);
         printwin((struct SPlay*) sp);
     }
+    if (libvlc_MediaParsedChanged == event->type && event->u.media_parsed_changed.new_status == libvlc_media_parsed_status_done && !events_blocked(((struct SPlay*) sp)->plyr)) {
+        libvlc_media_t* m = event->p_obj;
+        int mediaidx = libvlc_media_list_index_of_item(((struct SPlay*) sp)->plyr->mpl, m);
+        if(((struct SPlay*) sp)->fl->offset + fl_visible_lines() > mediaidx
+            && ((struct SPlay*) sp)->fl->offset <= mediaidx){
+            printinfln((struct SPlay*) sp);
+            printwin((struct SPlay*) sp);
+        }
+    }
 }
 
 #ifdef MPRIS
@@ -502,6 +511,8 @@ int main(void) {
             libvlc_media_t *m = libvlc_media_new_path(sp->plyr->inst, buffer);
             libvlc_media_parse_with_options(m, libvlc_media_parse_local, -1);
             libvlc_media_list_add_media(sp->plyr->mpl, m);
+            libvlc_event_manager_t *emm = libvlc_media_event_manager(m);
+            libvlc_event_attach(emm, libvlc_MediaParsedChanged, libvlc_event, sp);
             libvlc_media_release(m);
         }
     }
@@ -511,16 +522,6 @@ int main(void) {
     libvlc_media_list_lock(sp->plyr->mpl);
     int loaded_files = libvlc_media_list_count(sp->plyr->mpl);
     libvlc_media_list_unlock(sp->plyr->mpl);
-    // check if files are parsed (vlc is async now, this keeps blocking)
-    libvlc_media_t *m;
-    for(int i = 0; i < loaded_files; i++){
-        m = libvlc_media_list_item_at_index(sp->plyr->mpl, i);
-        while(libvlc_media_get_parsed_status(m) != libvlc_media_parsed_status_done){
-            sleep(0.001);
-        }
-        libvlc_media_release(m);
-    }
-
     if (loaded_files > 0) {
 #ifdef MPRIS
         /* MPRIS setup */
